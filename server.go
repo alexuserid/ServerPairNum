@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -9,35 +8,35 @@ import (
 	"time"
 )
 
-const	wait time.Duration = 10
-
 var (
-	clients int = 0
-	rndmS string
+	first   bool
+	second  = make(chan bool, 1)
+	randStr string
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	clients++
-	fmt.Println(clients)
+	if first {
+		second <- true
 
-	time.Sleep(wait * time.Second)
-
-	if clients == 2 {
-		rndm := rand.Intn(1000)
-		rndmS = strconv.FormatInt(int64(rndm), 10)
-		http.Redirect(w, r, "/ok/", http.StatusSeeOther)
 	} else {
-		w.Write([]byte("Only two clients can be served at once"))
-		clients = 0
-	}
-}
+		timeout := time.After(10 * time.Second)
+		rand.Seed(time.Now().Unix())
+		randStr = strconv.FormatInt(int64(rand.Intn(1000)), 10)
+		first = true
 
-func okHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(rndmS))
+		select {
+		case <-second:
+		case <-timeout:
+			w.Write([]byte("Timeout. No more connected users."))
+			first = false
+			return
+		}
+	}
+	w.Write([]byte(randStr))
+	first = false
 }
 
 func main() {
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/ok/", okHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
