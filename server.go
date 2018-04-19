@@ -12,6 +12,7 @@ type t struct {
 	str string
 	n int64
 	ch chan int64
+}
 
 var (
 	cc = make(chan t)
@@ -19,6 +20,7 @@ var (
 )
 
 func count() {
+	var i int64
 	for {
 		i++
 		counter <-i
@@ -26,15 +28,16 @@ func count() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	c := <-counter
+	var inst t
+	inst.n = <-counter
 
 	timeout := time.After(10 * time.Second)
-	randStr := strconv.FormatInt(int64(rand.Intn(1000)), 10)
+	inst.str = strconv.FormatInt(int64(rand.Intn(1000)), 10)
 	select {
 	case ans := <-cc:
-		w.Write([]byte(ans))
-	case cc <- c:
-		w.Write([]byte(randStr))
+		w.Write([]byte(ans.str))
+	case cc <- inst:
+		w.Write([]byte(inst.str))
 	case <-timeout:
 		w.Write([]byte("Timeout. No more connected users."))
 	}
