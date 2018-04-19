@@ -8,21 +8,24 @@ import (
 	"time"
 )
 
+type t struct {
+	str string
+	i int64
+	counter = make(<-chan int64)
+
 var (
 	cc = make(chan string)
-	counter = make(chan int64)
 )
 
 func count() {
-	var i int64
 	for {
-		i++
-		counter <-i
+		t.i++
+		t.counter <-t.i
 	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	c := <-counter
+	c := <-t.counter
 
 	timeout := time.After(10 * time.Second)
 	randStr := strconv.FormatInt(int64(rand.Intn(1000)), 10)
