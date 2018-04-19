@@ -31,18 +31,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	inst := t{
 		str: strconv.FormatInt(int64(rand.Intn(1000)), 10),
 		n:   <-counter,
+		ch:  make(chan int64),
 	}
 	timeout := time.After(10 * time.Second)
 
 	select {
 	case ans := <-cc:
+		ans.ch <- inst.n
 		if inst.n > ans.n {
-			w.Write([]byte(ans.str + "\nSecond"))
+			w.Write([]byte(ans.str + " Second"))
 		} else {
-			w.Write([]byte(ans.str + "\nFirst"))
+			w.Write([]byte(ans.str + " First"))
 		}
 	case cc <- inst:
-		w.Write([]byte(inst.str))
+		if inst.n > <-inst.ch {
+			w.Write([]byte(inst.str + " Second"))
+		} else {
+			w.Write([]byte(inst.str + " First"))
+		}
 	case <-timeout:
 		w.Write([]byte("Timeout. No more connected users."))
 	}
