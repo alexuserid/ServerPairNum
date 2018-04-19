@@ -14,7 +14,7 @@ type t struct {
 	ch chan int64
 
 var (
-	cc = make(chan string)
+	cc = make(chan t)
 	counter = make(chan int64)
 )
 
@@ -33,7 +33,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	select {
 	case ans := <-cc:
 		w.Write([]byte(ans))
-	case cc <- randStr:
+	case cc <- c:
 		w.Write([]byte(randStr))
 	case <-timeout:
 		w.Write([]byte("Timeout. No more connected users."))
