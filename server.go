@@ -28,11 +28,9 @@ func count() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	var inst t
-	inst.n = <-counter
-
+	inst := t{str: strconv.FormatInt(int64(rand.Intn(1000)), 10), n: <-counter}
 	timeout := time.After(10 * time.Second)
-	inst.str = strconv.FormatInt(int64(rand.Intn(1000)), 10)
+
 	select {
 	case ans := <-cc:
 		w.Write([]byte(ans.str))
