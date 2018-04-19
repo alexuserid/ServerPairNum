@@ -1,5 +1,3 @@
-//it's better version made by my friend
-//my version is in a previous commit
 package main
 
 import (
@@ -12,9 +10,20 @@ import (
 
 var (
 	cc = make(chan string)
+	counter = make(chan int64)
 )
 
+func count() {
+	var i int64
+	for {
+		i++
+		counter <-i
+	}
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
+	c := <-counter
+
 	timeout := time.After(10 * time.Second)
 	randStr := strconv.FormatInt(int64(rand.Intn(1000)), 10)
 	select {
@@ -29,6 +38,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	go count()
 	rand.Seed(time.Now().Unix())
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe(":2080", nil))
